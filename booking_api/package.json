@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "expo-auth-session": "^7.0.8",
+    "expo-crypto": "^15.0.7"
+  }
+}
