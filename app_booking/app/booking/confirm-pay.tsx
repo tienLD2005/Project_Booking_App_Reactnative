@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { BOOKING_COLORS } from '@/constants/booking';
+import { getRoomById, RoomResponse } from '@/apis/roomApi';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,19 +15,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { BOOKING_COLORS } from '@/constants/booking';
 
 export default function ConfirmPayScreen(): React.JSX.Element {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  
+
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'banking' | 'card'>('card');
-  
-  // Parse dates from params
+
   const defaultCheckIn = params.checkIn ? new Date(params.checkIn as string) : new Date();
   const defaultCheckOut = params.checkOut ? new Date(params.checkOut as string) : new Date(Date.now() + 24 * 60 * 60 * 1000);
-  
+
   const [adults, setAdults] = useState<number>(parseInt(params.adults as string) || 2);
   const [children, setChildren] = useState<number>(parseInt(params.children as string) || 0);
   const [infants, setInfants] = useState<number>(parseInt(params.infants as string) || 0);
@@ -36,13 +36,13 @@ export default function ConfirmPayScreen(): React.JSX.Element {
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
   const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
   const [showGuestPicker, setShowGuestPicker] = useState(false);
-  
+
   // Get room price from params
   const roomPrice = parseFloat(params.roomPrice as string) || 0;
-  
+
   // Calculate number of nights from checkIn and checkOut
   const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
-  
+
   // Calculate total price: room price * number of guests * number of nights
   const totalGuests = adults + children; // infants don't count
   const subtotal = roomPrice * totalGuests * nights;
@@ -106,10 +106,21 @@ export default function ConfirmPayScreen(): React.JSX.Element {
   };
 
 
+  const [room, setRoom] = useState<RoomResponse | null>(null);
+
+  useEffect(() => {
+    if (params.roomId) {
+      getRoomById(parseInt(params.roomId as string)).then(data => {
+        setRoom(data);
+        if (data.hotelName) setHotelName(data.hotelName);
+      }).catch(err => console.error(err));
+    }
+  }, [params.roomId]);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor={BOOKING_COLORS.BACKGROUND} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -123,20 +134,27 @@ export default function ConfirmPayScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Property Details Card */}
         <View style={styles.propertyCard}>
           <ExpoImage
-            source={{ uri: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=200' }}
+            source={{ uri: room?.imageUrls?.[0] || 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=200' }}
             style={styles.propertyImage}
             contentFit="cover"
           />
           <View style={styles.propertyInfo}>
             <View style={styles.ratingRow}>
               {[...Array(5)].map((_, i) => (
-                <Ionicons key={i} name="star" size={14} color={BOOKING_COLORS.RATING} />
+                <Ionicons
+                  key={i}
+                  name={i < Math.floor(room?.rating || 0) ? "star" : "star-outline"}
+                  size={14}
+                  color={BOOKING_COLORS.RATING}
+                />
               ))}
-              <Text style={styles.ratingText}>4.0 (115 Đánh giá)</Text>
+              <Text style={styles.ratingText}>
+                {room?.rating?.toFixed(1) || '0.0'} ({room?.reviewCount || 0} Đánh giá)
+              </Text>
             </View>
             <Text style={styles.propertyName}>{nameRoom}</Text>
             <Text style={styles.propertyLocation}>{hotelName}</Text>
@@ -149,7 +167,7 @@ export default function ConfirmPayScreen(): React.JSX.Element {
         {/* Booking Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Chi tiết đặt phòng</Text>
-          
+
           <View style={styles.detailRow}>
             <View style={styles.detailInfo}>
               <Text style={styles.detailLabel}>Ngày nhận phòng</Text>
@@ -256,7 +274,7 @@ export default function ConfirmPayScreen(): React.JSX.Element {
         {/* Payment Method */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
-          
+
           {/* Cash Payment */}
           <TouchableOpacity
             style={[styles.paymentMethodOption, paymentMethod === 'cash' && styles.paymentMethodOptionSelected]}
@@ -264,10 +282,10 @@ export default function ConfirmPayScreen(): React.JSX.Element {
             <View style={styles.paymentMethodContent}>
               <View style={styles.paymentMethodLeft}>
                 <View style={[styles.paymentMethodIcon, paymentMethod === 'cash' && styles.paymentMethodIconSelected]}>
-                  <Ionicons 
-                    name="cash-outline" 
-                    size={24} 
-                    color={paymentMethod === 'cash' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY} 
+                  <Ionicons
+                    name="cash-outline"
+                    size={24}
+                    color={paymentMethod === 'cash' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY}
                   />
                 </View>
                 <View style={styles.paymentMethodText}>
@@ -290,10 +308,10 @@ export default function ConfirmPayScreen(): React.JSX.Element {
             <View style={styles.paymentMethodContent}>
               <View style={styles.paymentMethodLeft}>
                 <View style={[styles.paymentMethodIcon, paymentMethod === 'banking' && styles.paymentMethodIconSelected]}>
-                  <Ionicons 
-                    name="phone-portrait-outline" 
-                    size={24} 
-                    color={paymentMethod === 'banking' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY} 
+                  <Ionicons
+                    name="phone-portrait-outline"
+                    size={24}
+                    color={paymentMethod === 'banking' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY}
                   />
                 </View>
                 <View style={styles.paymentMethodText}>
@@ -316,10 +334,10 @@ export default function ConfirmPayScreen(): React.JSX.Element {
             <View style={styles.paymentMethodContent}>
               <View style={styles.paymentMethodLeft}>
                 <View style={[styles.paymentMethodIcon, paymentMethod === 'card' && styles.paymentMethodIconSelected]}>
-                  <Ionicons 
-                    name="card-outline" 
-                    size={24} 
-                    color={paymentMethod === 'card' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY} 
+                  <Ionicons
+                    name="card-outline"
+                    size={24}
+                    color={paymentMethod === 'card' ? BOOKING_COLORS.BACKGROUND : BOOKING_COLORS.TEXT_PRIMARY}
                   />
                 </View>
                 <View style={styles.paymentMethodText}>

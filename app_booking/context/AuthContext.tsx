@@ -5,6 +5,7 @@ type User = {
     fullName?: string;
     email?: string;
     phone?: string;
+    avatar?: string;
 } | null;
 
 interface AuthContextValue {
@@ -12,6 +13,7 @@ interface AuthContextValue {
     restoring: boolean;
     signIn: (userData: User) => Promise<void>;
     signOut: () => Promise<void>;
+    updateUserProfile: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -40,13 +42,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(userData);
     };
 
+    const updateUserProfile = async (userData: User) => {
+        if (userData) {
+            await AsyncStorage.setItem("userProfile", JSON.stringify(userData));
+            setUser(userData);
+        }
+    };
+
     const signOut = async () => {
         await AsyncStorage.multiRemove(["accessToken", "refreshToken", "userProfile"]);
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, restoring, signIn, signOut }}>
+        <AuthContext.Provider value={{ user, restoring, signIn, signOut, updateUserProfile }}>
             {children}
         </AuthContext.Provider>
     );

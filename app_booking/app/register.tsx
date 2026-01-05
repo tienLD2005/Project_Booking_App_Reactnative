@@ -136,7 +136,7 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(600).springify()}
           style={styles.logoContainer}
         >
@@ -146,7 +146,7 @@ export default function RegisterScreen() {
           <Text style={styles.logoTitle}>live Green</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(100).duration(600).springify()}
           style={styles.header}
         >
@@ -154,7 +154,7 @@ export default function RegisterScreen() {
           <Text style={styles.subtitle}>Nhập thông tin của bạn bên dưới</Text>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(200).duration(600).springify()}
           style={styles.form}
         >
@@ -250,7 +250,7 @@ export default function RegisterScreen() {
           />
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.delay(600).duration(600).springify()}
           style={styles.loginContainer}
         >
@@ -277,15 +277,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#3182CE",
+    backgroundColor: "#5B6CFF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
   },
   logoText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
-  logoTitle: { fontSize: 20, fontWeight: "600", color: "#3182CE" },
+  logoTitle: { fontSize: 20, fontWeight: "600", color: "#5B6CFF" },
   header: { marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#3182CE", marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#5B6CFF", marginBottom: 8 },
   subtitle: { fontSize: 14, color: "#718096" },
   form: { marginBottom: 24 },
   genderContainer: { marginBottom: 24 },
@@ -302,10 +302,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 8,
   },
-  radioButtonSelected: { borderColor: "#3182CE" },
-  radioButtonInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#3182CE" },
+  radioButtonSelected: { borderColor: "#5B6CFF" },
+  radioButtonInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#5B6CFF" },
   genderText: { fontSize: 16, color: "#4A5568" },
-  genderTextSelected: { color: "#3182CE", fontWeight: "500" },
+  genderTextSelected: { color: "#5B6CFF", fontWeight: "500" },
   errorText: { color: "#E53E3E", fontSize: 13, marginTop: -8, marginBottom: 10 },
   loginContainer: {
     flexDirection: "row",
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   genderOptionSelected: { backgroundColor: "#EBF8FF", borderRadius: 8, paddingHorizontal: 8 },
 
   loginText: { fontSize: 14, color: "#718096" },
-  loginLink: { fontSize: 14, color: "#3182CE", fontWeight: "600" },
+  loginLink: { fontSize: 14, color: "#5B6CFF", fontWeight: "600" },
   pickerWrapper: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,

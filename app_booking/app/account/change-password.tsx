@@ -59,7 +59,7 @@ export default function ChangePasswordScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#3182CE" />
+          <Ionicons name="arrow-back" size={24} color="#5B6CFF" />
         </TouchableOpacity>
 
         <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   backButton: { marginBottom: 20, width: 40, height: 40, justifyContent: "center" },
   header: { marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#3182CE", marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#5B6CFF", marginBottom: 8 },
   subtitle: { fontSize: 14, color: "#718096" },
   form: { marginBottom: 24 },
 });

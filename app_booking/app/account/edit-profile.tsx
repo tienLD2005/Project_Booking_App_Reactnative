@@ -22,8 +22,11 @@ import axiosInstance from "../../utils/axiosInstance";
 import { getErrorMessage } from "../../utils/errorHandler";
 import { uploadAvatar } from "../../apis/authApi";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { updateUserProfile } = useAuth();
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -205,9 +208,10 @@ export default function EditProfileScreen() {
       if (res.data?.success) {
         // Cập nhật AsyncStorage
         const profileData = {
-          ...res.data.data, 
+          ...res.data.data,
         };
-        await AsyncStorage.setItem("userProfile", JSON.stringify(profileData));
+        // Cập nhật Context + AsyncStorage
+        updateUserProfile(profileData);
 
         Alert.alert("Thành công", "Cập nhật thông tin thành công", [
           { text: "OK", onPress: () => router.back() },
@@ -235,7 +239,7 @@ export default function EditProfileScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#3182CE" />
+          <Ionicons name="arrow-back" size={24} color="#5B6CFF" />
         </TouchableOpacity>
 
         <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
@@ -361,7 +365,7 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   backButton: { marginBottom: 20, width: 40, height: 40, justifyContent: "center" },
   header: { marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#3182CE", marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#5B6CFF", marginBottom: 8 },
   subtitle: { fontSize: 14, color: "#718096" },
   avatarContainer: { alignItems: "center", marginBottom: 24 },
   avatarWrapper: { position: "relative" },
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#3182CE",
+    backgroundColor: "#5B6CFF",
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -395,10 +399,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 8,
   },
-  radioButtonSelected: { borderColor: "#3182CE" },
-  radioButtonInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#3182CE" },
+  radioButtonSelected: { borderColor: "#5B6CFF" },
+  radioButtonInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#5B6CFF" },
   genderText: { fontSize: 16, color: "#4A5568" },
-  genderTextSelected: { color: "#3182CE", fontWeight: "500" },
+  genderTextSelected: { color: "#5B6CFF", fontWeight: "500" },
   errorText: { color: "#E53E3E", fontSize: 13, marginTop: -8, marginBottom: 10 },
   otpContainer: { marginTop: 16 },
   pickerWrapper: {

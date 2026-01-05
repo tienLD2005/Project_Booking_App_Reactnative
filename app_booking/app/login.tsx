@@ -61,6 +61,7 @@ export default function LoginScreen() {
             fullName: data.fullName || "",
             email: data.email || "",
             phone: data.phone || "",
+            avatar: data.avatar || "",
           })
         );
 
@@ -124,6 +125,7 @@ export default function LoginScreen() {
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
+        avatar: data.avatar,
       };
       await AsyncStorage.setItem("userProfile", JSON.stringify(profile));
       await signIn(profile);
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#3182CE",
+    backgroundColor: "#5B6CFF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
   logoTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#3182CE",
+    color: "#5B6CFF",
   },
   header: {
     marginBottom: 32,
@@ -309,7 +311,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#3182CE",
+    color: "#5B6CFF",
     marginBottom: 8,
   },
   subtitle: {
@@ -346,7 +348,7 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     fontSize: 14,
-    color: "#3182CE",
+    color: "#5B6CFF",
     textAlign: "right",
     marginTop: 8,
     marginBottom: 24,
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: 14,
-    color: "#3182CE",
+    color: "#5B6CFF",
     fontWeight: "600",
   },
 });

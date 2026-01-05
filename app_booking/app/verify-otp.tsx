@@ -169,7 +169,7 @@ export default function VerifyOTPScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#3182CE" />
+          <Ionicons name="arrow-back" size={24} color="#5B6CFF" />
         </TouchableOpacity>
 
         {/* Logo */}
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#3182CE",
+    backgroundColor: "#5B6CFF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   logoTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#3182CE",
+    color: "#5B6CFF",
   },
   header: {
     marginBottom: 32,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#3182CE",
+    color: "#5B6CFF",
     marginBottom: 8,
   },
   subtitle: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     color: "#1A202C",
   },
   otpInputFilled: {
-    borderColor: "#3182CE",
+    borderColor: "#5B6CFF",
     backgroundColor: "#EBF8FF",
   },
   resendContainer: {
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   resendLink: {
     fontSize: 14,
-    color: "#3182CE",
+    color: "#5B6CFF",
     fontWeight: "600",
   },
   timerText: {

@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     borderWidth: 3,
-    borderColor: '#6C7CE7',
+    borderColor: '#5B6CFF',
     borderTopColor: 'transparent',
     borderRightColor: 'transparent',
     borderBottomColor: 'transparent',
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: '600',
-    color: '#6C7CE7',
+    color: '#5B6CFF',
     letterSpacing: 0.5,
   },
   logoTextLower: {

@@ -133,7 +133,7 @@ export default function ForgotPasswordScreen() {
 
     const phoneNumberClean = phoneNumber.replace(/\D/g, "");
     const otpCode = otp.join("");
-    
+
     setLoading(true);
     try {
       const res = await axiosInstance.post("auth/reset-password", {
@@ -159,7 +159,7 @@ export default function ForgotPasswordScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#3182CE" />
+          <Ionicons name="arrow-back" size={24} color="#5B6CFF" />
         </TouchableOpacity>
 
         <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
@@ -170,8 +170,8 @@ export default function ForgotPasswordScreen() {
             {step === "phone"
               ? "Nhập số điện thoại để nhận OTP"
               : step === "otp"
-              ? "Nhập mã OTP đã gửi đến số điện thoại của bạn"
-              : "Nhập mật khẩu mới"}
+                ? "Nhập mã OTP đã gửi đến số điện thoại của bạn"
+                : "Nhập mật khẩu mới"}
           </Text>
         </Animated.View>
 
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
   backButton: { marginBottom: 20, width: 40, height: 40, justifyContent: "center" },
   header: { marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#3182CE", marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#5B6CFF", marginBottom: 8 },
   subtitle: { fontSize: 14, color: "#718096" },
   form: { marginBottom: 24 },
   otpContainer: { flexDirection: "row", gap: 12, marginBottom: 24, justifyContent: "center" },

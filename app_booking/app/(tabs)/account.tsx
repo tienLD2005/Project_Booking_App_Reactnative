@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
-/* ===== THEME COLOR (GIỐNG ẢNH) ===== */
 const PRIMARY = "#5B6CFF";
 const TEXT_DARK = "#1A202C";
 const TEXT_GRAY = "#718096";
@@ -22,22 +21,7 @@ const BORDER = "#EDF2F7";
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { signOut } = useAuth();
-  const [profile, setProfile] = useState<any | null>(null);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      let isActive = true;
-      const load = async () => {
-        const json = await AsyncStorage.getItem("userProfile");
-        if (isActive) setProfile(json ? JSON.parse(json) : null);
-      };
-      load();
-      return () => {
-        isActive = false;
-      };
-    }, [])
-  );
+  const { user, signOut } = useAuth();
 
   const logout = async () => {
     Alert.alert("Xác nhận đăng xuất", "Bạn có chắc chắn muốn đăng xuất không?", [
@@ -47,7 +31,6 @@ export default function AccountScreen() {
         style: "destructive",
         onPress: async () => {
           await signOut();
-          setProfile(null);
           router.replace("/login");
         },
       },
@@ -64,7 +47,7 @@ export default function AccountScreen() {
           <Image
             source={{
               uri:
-                profile?.avatar ||
+                user?.avatar ||
                 "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg",
             }}
             style={styles.avatar}
@@ -72,10 +55,10 @@ export default function AccountScreen() {
 
           <View style={{ flex: 1, marginLeft: 16 }}>
             <Text style={styles.userName}>
-              {profile?.fullName || "Khách"}
+              {user?.fullName || "Khách"}
             </Text>
             <Text style={styles.userEmail}>
-              {profile?.email || "Chưa đăng nhập"}
+              {user?.email || "Chưa đăng nhập"}
             </Text>
           </View>
 
@@ -116,7 +99,7 @@ export default function AccountScreen() {
 
       {/* ===== LOGOUT ===== */}
       <View style={{ padding: 20 }}>
-        {profile ? (
+        {user ? (
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
             <Ionicons name="log-out-outline" size={20} color="white" />
             <Text style={styles.logoutText}>Logout</Text>

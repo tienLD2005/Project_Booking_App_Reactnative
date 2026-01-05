@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Button from "../components/Button";
 import Input from "../components/Input";
@@ -87,7 +87,7 @@ export default function SetPasswordScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#3182CE" />
+          <Ionicons name="arrow-back" size={24} color="#5B6CFF" />
         </TouchableOpacity>
 
         {/* Logo */}
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#3182CE",
+    backgroundColor: "#5B6CFF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   logoTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#3182CE",
+    color: "#5B6CFF",
   },
   header: {
     marginBottom: 32,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#3182CE",
+    color: "#5B6CFF",
     marginBottom: 8,
   },
   subtitle: {

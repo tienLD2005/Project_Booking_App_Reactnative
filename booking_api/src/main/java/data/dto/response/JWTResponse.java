@@ -17,15 +17,16 @@ public class JWTResponse {
     private String fullName;
     private String email;
     private String phone;
+    private String avatar;
     private String authorities;
     private String token;
     private String refreshToken;
-
 
     public JWTResponse(User user, String accessToken, String refreshToken, String authorities) {
         this.fullName = user.getFullName();
         this.email = user.getEmail();
         this.phone = user.getPhoneNumber();
+        this.avatar = user.getAvatar();
         this.token = accessToken;
         this.refreshToken = refreshToken;
         this.authorities = authorities;
