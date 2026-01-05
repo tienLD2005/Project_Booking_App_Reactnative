@@ -7,11 +7,14 @@ import data.entity.User;
 import data.exception.NotFoundException;
 import data.repository.FavoriteRepository;
 import data.repository.RoomRepository;
+import data.repository.ReviewRepository;
 import data.service.FavoriteService;
 import data.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;  
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,9 +23,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FavoriteServiceImpl implements FavoriteService {
     
+    private static final Logger logger = LoggerFactory.getLogger(FavoriteServiceImpl.class);
+
     private final FavoriteRepository favoriteRepository;
     private final RoomRepository roomRepository;
-    private final UserService userService;
+    private final ReviewRepository reviewRepository;
+    private final UserService userService;  
     
     @Override
     @Transactional(readOnly = true)
@@ -40,7 +46,6 @@ public class FavoriteServiceImpl implements FavoriteService {
         Room room = roomRepository.findById(roomId)
             .orElseThrow(() -> new NotFoundException("Không tìm thấy phòng với ID: " + roomId));
         
-        // Check if already favorited
         if (favoriteRepository.existsByUser_UserIdAndRoom_RoomId(user.getUserId(), roomId)) {
             throw new RuntimeException("Phòng này đã được thêm vào yêu thích");
         }
@@ -92,8 +97,19 @@ public class FavoriteServiceImpl implements FavoriteService {
             roomImageUrl = room.getImages().get(0).getImageUrl();
         }
 
-        Double rating = 4.0; // Default rating
-        Integer reviewCount = 115; // Default review count
+        Double rating = null;
+        Integer reviewCount = null;
+
+        var reviews = reviewRepository.findByRoom_RoomId(room.getRoomId());
+        if (!reviews.isEmpty()) {
+            reviewCount = reviews.size();
+            rating = reviews.stream()
+                .mapToInt(r -> r.getRating())
+                .average()
+                .orElse(0.0);
+        }
+
+        logger.info("Favorite toDTO - favoriteId={} roomId={} rating={} reviewCount={}", favorite.getFavoriteId(), room.getRoomId(), rating, reviewCount);
         
         return FavoriteResponseDTO.builder()
             .favoriteId(favorite.getFavoriteId())

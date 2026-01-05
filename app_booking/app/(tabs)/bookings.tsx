@@ -324,10 +324,7 @@ export default function BookingsScreen(): React.JSX.Element {
     const isLoading = activeTab === 'upcoming' ? loadingUpcoming : loadingPast;
     const bookings = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
 
-    // Backend already filters by checkOut date:
-    // - Upcoming: checkOut >= today (PENDING and CONFIRMED, excluding CANCELLED)
-    // - Past: checkOut < today (PENDING and CONFIRMED, excluding CANCELLED)
-    // No need to filter by status on frontend
+
 
     if (isLoading) {
       return (

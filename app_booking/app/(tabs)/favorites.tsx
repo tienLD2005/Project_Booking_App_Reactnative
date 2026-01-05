@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
@@ -30,6 +31,12 @@ export default function FavoritesScreen(): React.JSX.Element {
     queryKey: ['favorites'],
     queryFn: getFavorites,
   });
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
 
   const removeFavoriteMutation = useMutation({
     mutationFn: removeFavorite,

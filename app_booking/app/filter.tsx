@@ -17,11 +17,9 @@ import { HotelCard } from "@/components/booking/hotel-card";
 import { BOOKING_COLORS, Hotel } from "@/constants/booking";
 import {
   getAllRooms,
-  searchRooms,
-  getRoomsByHotelId,
   RoomResponse,
 } from "@/apis/roomApi";
-import { getUserBookings } from '@/apis/bookingApi';
+import { getUserBookings, BookingResponse } from '@/apis/bookingApi';
 
 interface FilterModalProps {
   visible: boolean;
@@ -40,7 +38,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onApply,
   onClearAll,
 }) => (
-  <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+  <Modal visible={visible} transparent onRequestClose={onClose}>
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
@@ -76,7 +74,7 @@ export default function FilterRoomScreen(): React.JSX.Element {
   const [allRooms, setAllRooms] = useState<RoomResponse[]>([]);
   const [rooms, setRooms] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [bookingMap, setBookingMap] = useState<Record<string, string | null>>({});
+  const [bookingMap, setBookingMap] = useState<Record<string, BookingResponse['status'] | null>>({});
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [hotelModalVisible, setHotelModalVisible] = useState(false);
@@ -103,18 +101,16 @@ export default function FilterRoomScreen(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    // Load user bookings to determine booked rooms in this list
     let mounted = true;
     const loadBookings = async () => {
       try {
         const bookings = await getUserBookings();
-        const map: Record<string, string | null> = {};
+        const map: Record<string, BookingResponse['status'] | null> = {};
         bookings.forEach((b) => {
           map[b.roomId.toString()] = b.status;
         });
         if (mounted) setBookingMap(map);
       } catch (err) {
-        // ignore errors (likely not logged in)
       }
     };
     loadBookings();

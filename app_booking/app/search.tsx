@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { HotelCard } from '@/components/booking/hotel-card';
 import { BOOKING_COLORS, Hotel } from '@/constants/booking';
-import { getAllRooms, searchRooms, RoomResponse } from '@/apis/roomApi';
-import { getUserBookings } from '@/apis/bookingApi';
+import { getAllRooms, RoomResponse } from '@/apis/roomApi';
+import { getUserBookings, BookingResponse } from '@/apis/bookingApi';
 
 interface FilterModalProps {
   visible: boolean;
@@ -36,7 +36,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onApply,
   onClearAll,
 }) => (
-  <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+  <Modal visible={visible} transparent onRequestClose={onClose}>
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
@@ -73,40 +73,58 @@ export default function SearchRoomScreen(): React.JSX.Element {
   const [allRooms, setAllRooms] = useState<RoomResponse[]>([]);
   const [rooms, setRooms] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [bookingMap, setBookingMap] = useState<Record<string, string | null>>({});
+  const [bookingMap, setBookingMap] = useState<Record<string, BookingResponse['status'] | null>>({});
 
   // Filter states
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [hotelModalVisible, setHotelModalVisible] = useState(false);
   const [priceModalVisible, setPriceModalVisible] = useState(false);
-  const [selectedSort, setSelectedSort] = useState("");
+  const [selectedSort, setSelectedSort] = useState<string>("");
   const [selectedHotels, setSelectedHotels] = useState<string[]>(
     params.hotelName ? [params.hotelName as string] : []
   );
   const [selectedPriceRange, setSelectedPriceRange] = useState<{ min: number; max: number } | null>(null);
 
-  useEffect(() => {
-    loadAllRooms();
-    // If hotelName is passed from params, set it as selected
-    if (params.hotelName) {
-      setSelectedHotels([params.hotelName as string]);
-    }
-  }, []);
+  // Temporary selections while modal is open (do not apply until user taps "Áp dụng")
+  const [tempSelectedSort, setTempSelectedSort] = useState<string>(selectedSort);
+  const [tempSelectedHotels, setTempSelectedHotels] = useState<string[]>(selectedHotels);
+  const [tempSelectedPriceRange, setTempSelectedPriceRange] = useState<{ min: number; max: number } | null>(selectedPriceRange);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      applyFilters();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchText, selectedSort, selectedHotels, selectedPriceRange, allRooms]);
-
-  const loadAllRooms = async () => {
+  const loadAllRooms = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getAllRooms();
       setAllRooms(data);
-      setRooms(mapRoomResponseToRoom(data));
+      if (params.hotelName) {
+        // If navigated from a hotel page, pre-select that hotel and show filtered results
+        const hotelName = params.hotelName as string;
+        setSelectedHotels([hotelName]);
+        setTempSelectedHotels([hotelName]);
+        const hotelsSet = new Set([hotelName.trim().toLowerCase()]);
+        const filtered = data.filter((room) => room.hotelName && hotelsSet.has(room.hotelName.trim().toLowerCase()));
+        // inline mapping to Hotel
+        setRooms(filtered.map((item) => ({
+          id: item.roomId.toString(),
+          name: item.roomType,
+          location: item.hotelName || '',
+          price: item.price || 0,
+          rating: item.rating ?? 0,
+          reviewCount: item.reviewCount ?? 0,
+          imageUrl: (item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "") || "",
+          isFavorite: false,
+        })));
+      } else {
+        setRooms(data.map((item) => ({
+          id: item.roomId.toString(),
+          name: item.roomType,
+          location: item.hotelName || '',
+          price: item.price || 0,
+          rating: item.rating ?? 0,
+          reviewCount: item.reviewCount ?? 0,
+          imageUrl: (item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "") || "",
+          isFavorite: false,
+        })));
+      }
     } catch (error) {
       console.error('Load rooms error:', error);
       setAllRooms([]);
@@ -114,7 +132,24 @@ export default function SearchRoomScreen(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.hotelName]);
+
+  useEffect(() => {
+    loadAllRooms();
+  }, [loadAllRooms]);
+
+  // Sync temporary modal selections when opening modals (so modal shows current selection)
+  useEffect(() => {
+    if (sortModalVisible) setTempSelectedSort(selectedSort);
+  }, [sortModalVisible, selectedSort]);
+
+  useEffect(() => {
+    if (hotelModalVisible) setTempSelectedHotels(selectedHotels);
+  }, [hotelModalVisible, selectedHotels]);
+
+  useEffect(() => {
+    if (priceModalVisible) setTempSelectedPriceRange(selectedPriceRange);
+  }, [priceModalVisible, selectedPriceRange]);
 
   useEffect(() => {
     // Load user bookings to determine booked rooms in this list
@@ -122,12 +157,12 @@ export default function SearchRoomScreen(): React.JSX.Element {
     const loadBookings = async () => {
       try {
         const bookings = await getUserBookings();
-        const map: Record<string, string | null> = {};
+        const map: Record<string, BookingResponse['status'] | null> = {};
         bookings.forEach((b) => {
-          map[b.roomId.toString()] = b.status;
+          map[b.roomId.toString()] = b.status ?? null;
         });
         if (mounted) setBookingMap(map);
-      } catch (err) {
+      } catch {
         // ignore (user not logged in)
       }
     };
@@ -136,7 +171,7 @@ export default function SearchRoomScreen(): React.JSX.Element {
   }, []);
 
   // Hàm lọc theo từ khóa tìm kiếm
-  const filterBySearchKeyword = (rooms: RoomResponse[]): RoomResponse[] => {
+  const filterBySearchKeyword = useCallback((rooms: RoomResponse[]): RoomResponse[] => {
     if (searchText.trim().length === 0) {
       return rooms;
     }
@@ -146,10 +181,10 @@ export default function SearchRoomScreen(): React.JSX.Element {
         room.roomType?.toLowerCase().includes(keyword) ||
         room.hotelName?.toLowerCase().includes(keyword)
     );
-  };
+  }, [searchText]);
 
   // Hàm lọc theo tên khách sạn
-  const filterByHotelName = (rooms: RoomResponse[]): RoomResponse[] => {
+  const filterByHotelName = useCallback((rooms: RoomResponse[]): RoomResponse[] => {
     if (selectedHotels.length === 0) {
       return rooms;
     }
@@ -157,10 +192,10 @@ export default function SearchRoomScreen(): React.JSX.Element {
     return rooms.filter(
       (room) => room.hotelName && hotelSet.has(room.hotelName.trim().toLowerCase())
     );
-  };
+  }, [selectedHotels]);
 
   // Hàm lọc theo khoảng giá
-  const filterByPriceRange = (rooms: RoomResponse[]): RoomResponse[] => {
+  const filterByPriceRange = useCallback((rooms: RoomResponse[]): RoomResponse[] => {
     if (!selectedPriceRange || params.hotelName) {
       return rooms;
     }
@@ -168,10 +203,10 @@ export default function SearchRoomScreen(): React.JSX.Element {
       const price = room.price || 0;
       return price >= selectedPriceRange.min && price <= selectedPriceRange.max;
     });
-  };
+  }, [selectedPriceRange, params.hotelName]);
 
   // Hàm sắp xếp phòng
-  const sortRooms = (rooms: RoomResponse[]): RoomResponse[] => {
+  const sortRooms = useCallback((rooms: RoomResponse[]): RoomResponse[] => {
     if (params.hotelName) {
       return rooms; // Không sắp xếp khi lọc theo hotel từ index
     }
@@ -187,30 +222,9 @@ export default function SearchRoomScreen(): React.JSX.Element {
         break;
     }
     return sorted;
-  };
+  }, [selectedSort, params.hotelName]);
 
-  // Hàm áp dụng tất cả bộ lọc
-  const applyFilters = useCallback(() => {
-    setLoading(true);
-    let filtered = [...allRooms];
-    
-    // Áp dụng các bộ lọc theo thứ tự
-    filtered = filterBySearchKeyword(filtered);
-    filtered = filterByHotelName(filtered);
-    filtered = filterByPriceRange(filtered);
-    filtered = sortRooms(filtered);
-
-    setRooms(mapRoomResponseToRoom(filtered));
-    setLoading(false);
-  }, [allRooms, searchText, selectedHotels, selectedPriceRange, selectedSort, params.hotelName]);
-
-  const getHotelOptions = useCallback((): string[] => {
-    const hotels = new Set<string>();
-    allRooms.forEach((r) => r.hotelName && hotels.add(r.hotelName));
-    return Array.from(hotels).sort();
-  }, [allRooms]);
-
-  const mapRoomResponseToRoom = (data: RoomResponse[]): Hotel[] => {
+  const mapRoomResponseToRoom = useCallback((data: RoomResponse[]): Hotel[] => {
     return data.map((item) => ({
       id: item.roomId.toString(),
       name: item.roomType,
@@ -222,7 +236,37 @@ export default function SearchRoomScreen(): React.JSX.Element {
         "",
       isFavorite: false,
     }));
-  };
+  }, []);
+
+  // Hàm áp dụng tất cả bộ lọc
+  const applyFilters = useCallback(() => {
+    setLoading(true);
+    let filtered = [...allRooms];
+
+    // Áp dụng các bộ lọc theo thứ tự
+    filtered = filterBySearchKeyword(filtered);
+    filtered = filterByHotelName(filtered);
+    filtered = filterByPriceRange(filtered);
+    filtered = sortRooms(filtered);
+
+    setRooms(mapRoomResponseToRoom(filtered));
+    setLoading(false);
+  }, [allRooms, filterBySearchKeyword, filterByHotelName, filterByPriceRange, sortRooms, mapRoomResponseToRoom]);
+
+  // Debounced auto-apply for search text and data changes only
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      applyFilters();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchText, allRooms, applyFilters]);
+
+  const getHotelOptions = useCallback((): string[] => {
+    const hotels = new Set<string>();
+    allRooms.forEach((r) => r.hotelName && hotels.add(r.hotelName));
+    return Array.from(hotels).sort();
+  }, [allRooms]);
 
   const toggleFavorite = (roomId: string): void => {
     setRooms(
@@ -353,7 +397,15 @@ export default function SearchRoomScreen(): React.JSX.Element {
       <FilterModal
         visible={sortModalVisible}
         onClose={() => setSortModalVisible(false)}
-        title="Sắp xếp theo">
+        title="Sắp xếp theo"
+        onApply={() => {
+          setSelectedSort(tempSelectedSort);
+          setSortModalVisible(false);
+          applyFilters();
+        }}
+        onClearAll={() => {
+          setTempSelectedSort("");
+        }}>
         {[
           { id: "price-low", label: "Giá: thấp đến cao", icon: "arrow-up-outline" },
           { id: "price-high", label: "Giá: cao đến thấp", icon: "arrow-down-outline" },
@@ -362,18 +414,17 @@ export default function SearchRoomScreen(): React.JSX.Element {
             key={opt.id}
             style={styles.optionItem}
             onPress={() => {
-              setSelectedSort(opt.id);
-              setSortModalVisible(false);
+              setTempSelectedSort(opt.id);
             }}>
             <Ionicons
               name={opt.icon as any}
               size={20}
-              color={selectedSort === opt.id ? BOOKING_COLORS.PRIMARY : BOOKING_COLORS.TEXT_SECONDARY}
+              color={tempSelectedSort === opt.id ? BOOKING_COLORS.PRIMARY : BOOKING_COLORS.TEXT_SECONDARY}
             />
-            <Text style={[styles.optionText, selectedSort === opt.id && styles.optionTextSelected]}>
+            <Text style={[styles.optionText, tempSelectedSort === opt.id && styles.optionTextSelected]}>
               {opt.label}
             </Text>
-            {selectedSort === opt.id && (
+            {tempSelectedSort === opt.id && (
               <Ionicons name="checkmark" size={20} color={BOOKING_COLORS.PRIMARY} />
             )}
           </TouchableOpacity>
@@ -386,21 +437,21 @@ export default function SearchRoomScreen(): React.JSX.Element {
         onClose={() => setHotelModalVisible(false)}
         title="Lọc theo khách sạn"
         onApply={() => {
+          setSelectedHotels(tempSelectedHotels);
           setHotelModalVisible(false);
           applyFilters();
         }}
         onClearAll={() => {
-          setSelectedHotels([]);
-          applyFilters();
+          setTempSelectedHotels([]);
         }}>
         {getHotelOptions().map((name) => {
-          const isSelected = selectedHotels.includes(name);
+          const isSelected = tempSelectedHotels.includes(name);
           return (
             <TouchableOpacity
               key={name}
               style={styles.checkboxItem}
               onPress={() =>
-                setSelectedHotels((prev) =>
+                setTempSelectedHotels((prev) =>
                   isSelected ? prev.filter((h) => h !== name) : [...prev, name]
                 )
               }>
@@ -423,12 +474,12 @@ export default function SearchRoomScreen(): React.JSX.Element {
         onClose={() => setPriceModalVisible(false)}
         title="Khoảng giá"
         onApply={() => {
+          setSelectedPriceRange(tempSelectedPriceRange);
           setPriceModalVisible(false);
           applyFilters();
         }}
         onClearAll={() => {
-          setSelectedPriceRange(null);
-          applyFilters();
+          setTempSelectedPriceRange(null);
         }}>
         {[
           { label: "Dưới 500.000 VND", min: 0, max: 500000 },
@@ -437,12 +488,12 @@ export default function SearchRoomScreen(): React.JSX.Element {
           { label: "Trên 2.000.000 VND", min: 2000000, max: 10000000 },
         ].map((range) => {
           const isSelected =
-            selectedPriceRange?.min === range.min && selectedPriceRange?.max === range.max;
+            tempSelectedPriceRange?.min === range.min && tempSelectedPriceRange?.max === range.max;
           return (
             <TouchableOpacity
               key={range.label}
               style={styles.radioItem}
-              onPress={() => setSelectedPriceRange({ min: range.min, max: range.max })}>
+              onPress={() => setTempSelectedPriceRange({ min: range.min, max: range.max })}>
               <View style={styles.radioButton}>
                 {isSelected && <View style={styles.radioButtonInner} />}
               </View>

@@ -16,7 +16,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Integer> {
     
     Optional<Favorite> findByUser_UserIdAndRoom_RoomId(Integer userId, Integer roomId);
     
-    @Query("SELECT f FROM Favorite f WHERE f.user.userId = :userId AND f.room.roomId = :roomId")
+    @Query("SELECT f FROM Favorite f WHERE f.user.userId = :userId AND f.room.roomId = :roomId order by f.favoriteId desc")
     Optional<Favorite> findFavoriteByUserAndRoom(@Param("userId") Integer userId, @Param("roomId") Integer roomId);
     
     boolean existsByUser_UserIdAndRoom_RoomId(Integer userId, Integer roomId);

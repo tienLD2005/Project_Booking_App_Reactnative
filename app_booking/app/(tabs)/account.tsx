@@ -3,9 +3,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
+
+/* ===== THEME COLOR (GIỐNG ẢNH) ===== */
+const PRIMARY = "#5B6CFF";
+const TEXT_DARK = "#1A202C";
+const TEXT_GRAY = "#718096";
+const BORDER = "#EDF2F7";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -27,157 +40,202 @@ export default function AccountScreen() {
   );
 
   const logout = async () => {
-    Alert.alert(
-      "Xác nhận đăng xuất",
-      "Bạn có chắc chắn muốn đăng xuất không?",
-      [
-        {
-          text: "Hủy",
-          style: "cancel",
+    Alert.alert("Xác nhận đăng xuất", "Bạn có chắc chắn muốn đăng xuất không?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: async () => {
+          await signOut();
+          setProfile(null);
+          router.replace("/login");
         },
-        {
-          text: "Đăng xuất",
-          style: "destructive",
-          onPress: async () => {
-            await signOut();
-            setProfile(null);
-            router.replace("/login");
-          },
-        },
-
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ===== HEADER ===== */}
       <View style={styles.header}>
-        <Image
-          source={{
-            uri: "https://aic.com.vn/wp-content/uploads/2024/10/avatar-fb-mac-dinh-1.jpg",
-          }}
-          style={styles.avatar}
-        />
-        <Text style={styles.userName}>{profile?.fullName || "Khách"}</Text>
-        <Text style={styles.userEmail}>{profile?.email || "Chưa đăng nhập"}</Text>
+        <Text style={styles.headerTitle}>My Profile</Text>
+
+        <View style={styles.profileRow}>
+          <Image
+            source={{
+              uri:
+                profile?.avatar ||
+                "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg",
+            }}
+            style={styles.avatar}
+          />
+
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            <Text style={styles.userName}>
+              {profile?.fullName || "Khách"}
+            </Text>
+            <Text style={styles.userEmail}>
+              {profile?.email || "Chưa đăng nhập"}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => router.push("/account/edit-profile")}
+          >
+            <Ionicons name="pencil" size={18} color={PRIMARY} />
+          </TouchableOpacity>
+        </View>
       </View>
 
+      {/* ===== MENU ===== */}
       <View style={styles.menu}>
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/account/edit-profile")}
-        >
-          <Ionicons name="person-circle-outline" size={24} color="#4A5568" />
-          <Text style={styles.menuText}>Chỉnh sửa hồ sơ</Text>
-          <FontAwesome5 name="chevron-right" size={16} color="#A0AEC0" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/account/change-password")}
-        >
-          <Ionicons name="lock-closed-outline" size={24} color="#4A5568" />
-          <Text style={styles.menuText}>Đổi mật khẩu</Text>
-          <FontAwesome5 name="chevron-right" size={16} color="#A0AEC0" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="notifications-outline" size={24} color="#4A5568" />
-          <Text style={styles.menuText}>Thông báo</Text>
-          <FontAwesome5 name="chevron-right" size={16} color="#A0AEC0" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/account/terms-conditions")}
-        >
-          <Ionicons name="document-text-outline" size={24} color="#4A5568" />
-          <Text style={styles.menuText}>Điều khoản & Điều kiện</Text>
-          <FontAwesome5 name="chevron-right" size={16} color="#A0AEC0" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={() => router.push("/account/privacy-policy")}
-        >
-          <Ionicons name="shield-checkmark-outline" size={24} color="#4A5568" />
-          <Text style={styles.menuText}>Chính sách bảo mật</Text>
-          <FontAwesome5 name="chevron-right" size={16} color="#A0AEC0" />
-        </TouchableOpacity>
+        {renderItem(
+          "Edit Profile",
+          "create-outline",
+          () => router.push("/account/edit-profile")
+        )}
+        {renderItem(
+          "Change Password",
+          "lock-closed-outline",
+          () => router.push("/account/change-password")
+        )}
+        {renderItem("Payment Method", "card-outline")}
+        {renderItem("My Bookings", "clipboard-outline")}
+        {renderItem(
+          "Privacy Policy",
+          "shield-checkmark-outline",
+          () => router.push("/account/privacy-policy")
+        )}
+        {renderItem(
+          "Terms & Conditions",
+          "document-text-outline",
+          () => router.push("/account/terms-conditions")
+        )}
       </View>
 
-      {profile ? (
-        <TouchableOpacity style={[styles.menuItem, styles.logoutButton]} onPress={logout}>
-          <Ionicons name="log-out-outline" size={24} color="#E53E3E" />
-          <Text
-            style={[styles.menuText, { color: "#E53E3E", fontWeight: "bold" }]}
+      {/* ===== LOGOUT ===== */}
+      <View style={{ padding: 20 }}>
+        {profile ? (
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Ionicons name="log-out-outline" size={20} color="white" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => router.push("/login")}
           >
-            Đăng xuất
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={[styles.menuItem, styles.logoutButton]} onPress={() => router.push("/login")}>
-          <Ionicons name="log-in-outline" size={24} color="#3182CE" />
-          <Text
-            style={[styles.menuText, { color: "#3182CE", fontWeight: "bold" }]}
-          >
-            Đăng nhập
-          </Text>
-        </TouchableOpacity>
-      )}
+            <Ionicons name="log-in-outline" size={20} color="white" />
+            <Text style={styles.logoutText}>Login</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
 
+/* ===== MENU ITEM ===== */
+function renderItem(
+  label: string,
+  icon: any,
+  onPress?: () => void
+) {
+  return (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+      <Ionicons name={icon} size={22} color={TEXT_DARK} />
+      <Text style={styles.menuText}>{label}</Text>
+      <FontAwesome5 name="chevron-right" size={14} color="#CBD5E0" />
+    </TouchableOpacity>
+  );
+}
+
+/* ===== STYLES ===== */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#F7F8FC",
   },
+
   header: {
-    alignItems: "center",
-    paddingVertical: 30,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDF2F7",
+    backgroundColor: PRIMARY,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    paddingHorizontal: 20,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  headerTitle: {
+    textAlign: "center",
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+    marginVertical: 12,
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginTop: 15,
-    color: "#2D3748",
-  },
-  userEmail: {
-    fontSize: 16,
-    color: "#718096",
-    marginTop: 5,
-  },
-  menu: {
-    marginTop: 20,
-  },
-  menuItem: {
-    backgroundColor: "white",
+  profileRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    marginTop: 16,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "white",
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "#E0E7FF",
+    marginTop: 2,
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  menu: {
+    marginTop: 24,
+    backgroundColor: "white",
+    borderRadius: 16,
+    marginHorizontal: 16,
+    overflow: "hidden",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#EDF2F7",
+    borderBottomColor: BORDER,
   },
   menuText: {
     flex: 1,
-    marginLeft: 15,
-    fontSize: 18,
-    color: "#2D3748",
+    marginLeft: 16,
+    fontSize: 16,
+    color: TEXT_DARK,
   },
+
   logoutButton: {
-    marginTop: 30,
-    borderTopWidth: 1,
-    borderTopColor: "#EDF2F7",
+    flexDirection: "row",
+    height: 52,
+    backgroundColor: PRIMARY,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  logoutText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

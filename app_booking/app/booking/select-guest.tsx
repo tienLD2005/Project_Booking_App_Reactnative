@@ -7,6 +7,9 @@ import {
   StatusBar,
   ImageBackground,
   Platform,
+  Modal,
+  Pressable,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,11 +21,11 @@ export default function SelectGuestScreen(): React.JSX.Element {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
-  
+
   // Parse dates from params or use defaults
   const defaultCheckIn = params.checkIn ? new Date(params.checkIn as string) : new Date();
   const defaultCheckOut = params.checkOut ? new Date(params.checkOut as string) : new Date(Date.now() + 24 * 60 * 60 * 1000);
-  
+
   const [adults, setAdults] = useState<number>(parseInt(params.adults as string) || 2);
   const [children, setChildren] = useState<number>(parseInt(params.children as string) || 0);
   const [infants, setInfants] = useState<number>(parseInt(params.infants as string) || 0);
@@ -121,86 +124,105 @@ export default function SelectGuestScreen(): React.JSX.Element {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
+
       <ImageBackground
         source={{ uri: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800' }}
         style={styles.backgroundImage}
         blurRadius={20}>
         <View style={styles.blurOverlay}>
           <View style={styles.contentCard}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={24} color={BOOKING_COLORS.TEXT_PRIMARY} />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.title}>Chọn ngày và số khách</Text>
 
-            {/* Date Selection */}
-            <View style={styles.dateSection}>
-              <Text style={styles.sectionLabel}>Ngày nhận phòng</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowCheckInPicker(true)}>
-                <Ionicons name="calendar-outline" size={20} color={BOOKING_COLORS.PRIMARY} />
-                <Text style={styles.dateText}>{formatDisplayDate(checkIn)}</Text>
+            <ScrollView style={styles.innerScroll} contentContainerStyle={{ paddingBottom: 40 }}>
+              {/* Date Selection */}
+              <View style={styles.dateSection}>
+                <Text style={styles.sectionLabel}>Ngày nhận phòng</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowCheckInPicker(true)}>
+                  <Ionicons name="calendar-outline" size={20} color={BOOKING_COLORS.PRIMARY} />
+                  <Text style={styles.dateText}>{formatDisplayDate(checkIn)}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.dateSection}>
+                <Text style={styles.sectionLabel}>Ngày trả phòng</Text>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowCheckOutPicker(true)}>
+                  <Ionicons name="calendar-outline" size={20} color={BOOKING_COLORS.PRIMARY} />
+                  <Text style={styles.dateText}>{formatDisplayDate(checkOut)}</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Guest Selection */}
+              <Text style={styles.sectionLabel}>Số lượng khách</Text>
+              {renderGuestSelector('Người lớn', 'Từ 14 tuổi trở lên', adults, 'adults')}
+              {renderGuestSelector('Trẻ em', 'Từ 2-13 tuổi', children, 'children')}
+              {renderGuestSelector('Trẻ sơ sinh', 'Dưới 2 tuổi', infants, 'infants')}
+
+              <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+                <Text style={styles.nextButtonText}>Tiếp tục</Text>
               </TouchableOpacity>
-              {showCheckInPicker && (
-                <View style={styles.pickerWrapper}>
-                  <DateTimePicker
-                    value={checkIn}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    minimumDate={new Date()}
-                    textColor={Platform.OS === 'ios' ? BOOKING_COLORS.TEXT_PRIMARY : undefined}
-                    onChange={(event, selectedDate) => {
-                      setShowCheckInPicker(Platform.OS === 'ios');
-                      if (selectedDate) {
+            </ScrollView>
+          </View>
+
+          {(showCheckInPicker || showCheckOutPicker) && (
+            <Modal
+              visible={showCheckInPicker || showCheckOutPicker}
+              transparent
+              animationType="slide"
+              onRequestClose={() => {
+                setShowCheckInPicker(false);
+                setShowCheckOutPicker(false);
+              }}>
+              <Pressable style={styles.modalOverlay} onPress={() => { setShowCheckInPicker(false); setShowCheckOutPicker(false); }} />
+              <View style={styles.modalContent}>
+                <View style={styles.modalHandle} />
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={() => { setShowCheckInPicker(false); setShowCheckOutPicker(false); }}>
+                    <Text style={styles.modalDoneText}>Xong</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={showCheckInPicker ? checkIn : checkOut}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+                  minimumDate={showCheckInPicker ? new Date() : new Date(checkIn.getTime() + 24 * 60 * 60 * 1000)}
+                  textColor={Platform.OS === 'ios' ? BOOKING_COLORS.TEXT_PRIMARY : undefined}
+                  onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                      if (showCheckInPicker) {
                         setCheckIn(selectedDate);
-                        // Auto adjust checkOut if it's before or equal to checkIn
                         if (checkOut <= selectedDate) {
                           const newCheckOut = new Date(selectedDate);
                           newCheckOut.setDate(newCheckOut.getDate() + 1);
                           setCheckOut(newCheckOut);
                         }
-                      }
-                    }}
-                  />
-                </View>
-              )}
-            </View>
-
-            <View style={styles.dateSection}>
-              <Text style={styles.sectionLabel}>Ngày trả phòng</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowCheckOutPicker(true)}>
-                <Ionicons name="calendar-outline" size={20} color={BOOKING_COLORS.PRIMARY} />
-                <Text style={styles.dateText}>{formatDisplayDate(checkOut)}</Text>
-              </TouchableOpacity>
-              {showCheckOutPicker && (
-                <View style={styles.pickerWrapper}>
-                  <DateTimePicker
-                    value={checkOut}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    minimumDate={new Date(checkIn.getTime() + 24 * 60 * 60 * 1000)}
-                    textColor={Platform.OS === 'ios' ? BOOKING_COLORS.TEXT_PRIMARY : undefined}
-                    onChange={(event, selectedDate) => {
-                      setShowCheckOutPicker(Platform.OS === 'ios');
-                      if (selectedDate) {
+                      } else {
                         setCheckOut(selectedDate);
                       }
-                    }}
-                  />
-                </View>
-              )}
-            </View>
+                    }
+                    if (Platform.OS !== 'ios') {
+                      setShowCheckInPicker(false);
+                      setShowCheckOutPicker(false);
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity style={styles.modalDoneButton} onPress={() => { setShowCheckInPicker(false); setShowCheckOutPicker(false); }}>
+                    <Text style={styles.modalDoneButtonText}>Hoàn tất</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Modal>
+          )}
 
-            {/* Guest Selection */}
-            <Text style={styles.sectionLabel}>Số lượng khách</Text>
-            {renderGuestSelector('Người lớn', 'Từ 14 tuổi trở lên', adults, 'adults')}
-            {renderGuestSelector('Trẻ em', 'Từ 2-13 tuổi', children, 'children')}
-            {renderGuestSelector('Trẻ sơ sinh', 'Dưới 2 tuổi', infants, 'infants')}
-
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>Tiếp tục</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ImageBackground>
     </View>
@@ -323,6 +345,64 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
     marginTop: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  backButton: {
+    padding: 8,
+  },
+  innerScroll: {
+    // allows content to scroll when space is constrained
+    maxHeight: '100%'
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)'
+  },
+  modalContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: BOOKING_COLORS.BACKGROUND,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#ccc',
+    borderRadius: 4,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  modalHeader: {
+    alignItems: 'flex-end',
+    marginBottom: 8,
+  },
+  modalDoneText: {
+    fontSize: 16,
+    color: BOOKING_COLORS.PRIMARY,
+    fontWeight: '600',
+  },
+  modalDoneButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: BOOKING_COLORS.PRIMARY,
+    marginHorizontal: 16,
+    alignItems: 'center',
+  },
+  modalDoneButtonText: {
+    color: BOOKING_COLORS.BACKGROUND,
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

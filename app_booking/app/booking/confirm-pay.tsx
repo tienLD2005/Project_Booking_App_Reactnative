@@ -29,6 +29,8 @@ export default function ConfirmPayScreen(): React.JSX.Element {
   const [adults, setAdults] = useState<number>(parseInt(params.adults as string) || 2);
   const [children, setChildren] = useState<number>(parseInt(params.children as string) || 0);
   const [infants, setInfants] = useState<number>(parseInt(params.infants as string) || 0);
+  const [nameRoom, setNameRoom] = useState<string>(params.roomName as string || '');
+  const [hotelName, setHotelName] = useState<string>(params.hotelName as string || '');
   const [checkIn, setCheckIn] = useState<Date>(defaultCheckIn);
   const [checkOut, setCheckOut] = useState<Date>(defaultCheckOut);
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
@@ -63,6 +65,8 @@ export default function ConfirmPayScreen(): React.JSX.Element {
   const handlePayNow = () => {
     const bookingParams = {
       ...params,
+      nameRoom: params.roomName || '',
+      hotelName: params.hotelName || '',
       roomId: params.roomId || '',
       checkIn: formatDate(checkIn),
       checkOut: formatDate(checkOut),
@@ -134,10 +138,10 @@ export default function ConfirmPayScreen(): React.JSX.Element {
               ))}
               <Text style={styles.ratingText}>4.0 (115 Đánh giá)</Text>
             </View>
-            <Text style={styles.propertyName}>Malon Greens</Text>
-            <Text style={styles.propertyLocation}>Mumbai, Maharashtra</Text>
+            <Text style={styles.propertyName}>{nameRoom}</Text>
+            <Text style={styles.propertyLocation}>{hotelName}</Text>
             <Text style={styles.propertySummary}>
-              {adults} người lớn | {children} trẻ em
+              {adults} người lớn | {children} trẻ em | {infants} trẻ sơ sinh
             </Text>
           </View>
         </View>

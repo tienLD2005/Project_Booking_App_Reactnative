@@ -6,7 +6,7 @@ plugins {
 
 group = 'ra.edu'
 version = '0.0.1-SNAPSHOT'
-description = 'thi_online_api'
+description = 'booking_api'
 
 java {
     toolchain {

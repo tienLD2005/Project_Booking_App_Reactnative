@@ -29,7 +29,4 @@ export interface City {
   imageUrl: string;
 }
 
-// Dữ liệu hardcode đã được thay thế bằng dữ liệu từ database
-// CITIES, BEST_HOTELS, NEARBY_HOTELS không còn được sử dụng
-// Dữ liệu hiện tại được lấy từ API (getAllHotels, searchHotels, etc.)
 
