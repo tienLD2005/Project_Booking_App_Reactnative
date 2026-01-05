@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,6 +55,8 @@ public class AccountController {
     private final JWTProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final HttpServletRequest request;
+
+    private static final String DEFAULT_AVATAR = "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg";
 
     @PostMapping("/register")
     public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@Valid @RequestBody UserRegister userRegister) {
@@ -189,6 +193,8 @@ public class AccountController {
                     user = new User();
                     user.setEmail(email);
                     user.setFullName(fullName != null ? fullName : "Google User");
+                    String picture = googleUserInfo.get("picture") != null ? (String) googleUserInfo.get("picture") : DEFAULT_AVATAR;
+                    user.setAvatar(picture);
                     user.setEnabled(true);
                     // Tạo password ngẫu nhiên (user sẽ không dùng password để login)
                     user.setPasswordHash(passwordEncoder.encode("GOOGLE_AUTH_" + System.currentTimeMillis()));
@@ -229,6 +235,16 @@ public class AccountController {
             log.error("Google Sign-In error: {}", e.getMessage(), e);
             return ResponseEntity.status(500)
                 .body(Map.of("message", "Lỗi khi xử lý đăng nhập Google: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/profile/avatar")
+    public ResponseEntity<APIResponse<UserResponseDTO>> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        try {
+            UserResponseDTO dto = userService.updateAvatar(file);
+            return ResponseEntity.ok(APIResponse.success(dto, "Upload avatar thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(APIResponse.error(e.getMessage(), null));
         }
     }
 

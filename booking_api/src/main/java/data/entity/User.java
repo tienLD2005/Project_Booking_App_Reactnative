@@ -44,6 +44,9 @@ public class User {
     @Column(name = "enabled", nullable = false)
     private boolean enabled = false;
 
+    @Column(name = "avatar", length = 500)
+    private String avatar;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Otp otp;
 

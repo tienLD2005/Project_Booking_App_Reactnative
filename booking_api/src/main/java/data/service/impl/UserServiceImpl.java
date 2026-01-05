@@ -1,6 +1,10 @@
 package data.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.multipart.MultipartFile;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,6 +49,10 @@ public class UserServiceImpl implements UserService {
     private OtpService otpService;
     @Autowired
     private OtpRepository otpRepository;
+    @Autowired
+    private Cloudinary cloudinary;
+
+    private static final String DEFAULT_AVATAR = "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg";
 
     @Override
     @Transactional
@@ -66,6 +74,7 @@ public class UserServiceImpl implements UserService {
                 .phoneNumber(userRegister.getPhoneNumber())
                 .dateOfBirth(userRegister.getDateOfBirth())
                 .gender(userRegister.getGender())
+            .avatar(DEFAULT_AVATAR)
                 .enabled(false) // Chưa được kích hoạt cho đến khi verify OTP và set password
                 .build();
         userRepository.save(user);
@@ -185,11 +194,32 @@ public class UserServiceImpl implements UserService {
         if (request.getGender() != null) {
             user.setGender(request.getGender());
         }
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            user.setAvatar(request.getAvatar());
+        }
         
         user = userRepository.save(user);
         log.info("Profile updated for user: {}", user.getEmail());
         
         return UserMapper.toDTO(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponseDTO updateAvatar(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File avatar không hợp lệ");
+        }
+        try {
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("folder", "avatars"));
+            String url = (String) uploadResult.get("secure_url");
+            User user = getCurrentUser();
+            user.setAvatar(url);
+            user = userRepository.save(user);
+            return UserMapper.toDTO(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Tải ảnh lên Cloudinary thất bại: " + e.getMessage());
+        }
     }
 
     @Override

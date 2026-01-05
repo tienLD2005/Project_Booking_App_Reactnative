@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState, useEffect } from "react";
@@ -10,6 +11,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +20,7 @@ import Button from "../../components/Button";
 import Input from "../../components/Input";
 import axiosInstance from "../../utils/axiosInstance";
 import { getErrorMessage } from "../../utils/errorHandler";
+import { uploadAvatar } from "../../apis/authApi";
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -35,6 +38,8 @@ export default function EditProfileScreen() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [needsOtp, setNeedsOtp] = useState(false);
   const [otp, setOtp] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -54,6 +59,7 @@ export default function EditProfileScreen() {
           gender: data.gender === "Female" ? "Female" : "Male",
         });
         setOriginalPhoneNumber(data.phoneNumber || "");
+        setAvatarUrl(data.avatar || null);
       }
     } catch (e: any) {
       console.log("Load profile error:", e?.response?.data);
@@ -98,6 +104,19 @@ export default function EditProfileScreen() {
     handleChange("phoneNumber", formatted);
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     const { fullName, email, phoneNumber } = form;
@@ -127,7 +146,7 @@ export default function EditProfileScreen() {
 
     // Kiểm tra nếu đổi số điện thoại
     const phoneChanged = phoneNumberClean !== originalPhoneNumber.replace(/\D/g, "");
-    
+
     if (phoneChanged && !needsOtp && !otp) {
       // Lần đầu đổi số điện thoại, gửi OTP
       setLoading(true);
@@ -139,7 +158,7 @@ export default function EditProfileScreen() {
           dateOfBirth: dateOfBirthFormatted,
           gender,
         });
-        
+
         if (res.data?.message?.includes("OTP")) {
           setNeedsOtp(true);
           Alert.alert("Thông báo", "OTP đã được gửi đến số điện thoại mới. Vui lòng nhập OTP để xác thực.");
@@ -160,6 +179,20 @@ export default function EditProfileScreen() {
 
     setLoading(true);
     try {
+      // 1. Upload Avatar if selected
+      if (selectedImage) {
+        try {
+          await uploadAvatar(selectedImage);
+        } catch (uploadError) {
+          console.log("Upload avatar error:", uploadError);
+          const msg = getErrorMessage(uploadError);
+          Alert.alert("Lỗi upload ảnh", msg);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Update Profile
       const res = await axiosInstance.put("auth/profile", {
         fullName,
         email,
@@ -172,12 +205,10 @@ export default function EditProfileScreen() {
       if (res.data?.success) {
         // Cập nhật AsyncStorage
         const profileData = {
-          fullName: res.data.data.fullName,
-          email: res.data.data.email,
-          phone: res.data.data.phoneNumber,
+          ...res.data.data, 
         };
         await AsyncStorage.setItem("userProfile", JSON.stringify(profileData));
-        
+
         Alert.alert("Thành công", "Cập nhật thông tin thành công", [
           { text: "OK", onPress: () => router.back() },
         ]);
@@ -211,6 +242,20 @@ export default function EditProfileScreen() {
           <Text style={styles.title}>Chỉnh sửa hồ sơ</Text>
           <Text style={styles.subtitle}>Cập nhật thông tin cá nhân của bạn</Text>
         </Animated.View>
+
+        <View style={styles.avatarContainer}>
+          <TouchableOpacity onPress={pickImage} style={styles.avatarWrapper}>
+            <Image
+              source={{
+                uri: selectedImage || avatarUrl || "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+              }}
+              style={styles.avatar}
+            />
+            <View style={styles.cameraIcon}>
+              <Ionicons name="camera" size={20} color="white" />
+            </View>
+          </TouchableOpacity>
+        </View>
 
         <Animated.View entering={FadeInDown.delay(100).duration(600).springify()} style={styles.form}>
           <Input
@@ -246,7 +291,7 @@ export default function EditProfileScreen() {
                 placeholder="Nhập OTP đã gửi đến số điện thoại mới"
                 value={otp}
                 onChangeText={setOtp}
-                keyboardType="number-pad"
+                keyboardType="numeric"
               />
             </View>
           )}
@@ -254,7 +299,7 @@ export default function EditProfileScreen() {
           <Input
             label="Ngày sinh"
             placeholder="Chọn ngày sinh"
-            onChangeText={() => {}}
+            onChangeText={() => { }}
             value={formatDate(form.dateOfBirth)}
             editable={false}
             onPress={() => setShowDatePicker(true)}
@@ -318,6 +363,22 @@ const styles = StyleSheet.create({
   header: { marginBottom: 32 },
   title: { fontSize: 28, fontWeight: "bold", color: "#3182CE", marginBottom: 8 },
   subtitle: { fontSize: 14, color: "#718096" },
+  avatarContainer: { alignItems: "center", marginBottom: 24 },
+  avatarWrapper: { position: "relative" },
+  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: "#E2E8F0" },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#3182CE",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "white",
+  },
   form: { marginBottom: 24 },
   genderContainer: { marginBottom: 24 },
   genderLabel: { fontSize: 14, fontWeight: "600", color: "#1A202C", marginBottom: 12 },

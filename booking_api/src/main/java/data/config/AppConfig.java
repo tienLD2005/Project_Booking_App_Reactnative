@@ -1,6 +1,5 @@
 package data.config;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = {
@@ -22,9 +23,12 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
         "data.repository",
 })
 public class AppConfig {
-    private String HOST_NAME = "dqodyytc6";
-    private String API_KEY = "579886866183763";
-    private String API_SECRET = "UjDW8SYuISy9uFl8cS2L4ztLd0s";
+    @Value("${cloudinary.cloud-name}")
+    private String HOST_NAME;
+    @Value("${cloudinary.api-key}")
+    private String API_KEY;
+    @Value("${cloudinary.api-secret}")
+    private String API_SECRET;
 
     @Bean
     public Cloudinary cloudinary() {
@@ -32,8 +36,7 @@ public class AppConfig {
                 "cloud_name", HOST_NAME,
                 "api_key", API_KEY,
                 "api_secret", API_SECRET,
-                "secure", true
-        ));
+                "secure", true));
     }
 
     @Bean

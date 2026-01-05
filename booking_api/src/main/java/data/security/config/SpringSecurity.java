@@ -53,11 +53,28 @@ public class SpringSecurity {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/me", "/api/v1/auth/profile", "/api/v1/auth/change-password").authenticated()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers( "/api/v1/hotels/**", "/api/v1/rooms/**", "/api/v1/reviews/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+    .requestMatchers(
+        "/api/v1/auth/me",
+        "/api/v1/auth/profile",
+        "/api/v1/auth/profile/avatar",
+        "/api/v1/auth/change-password"
+    ).authenticated()
+
+    .requestMatchers(
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh-token"
+    ).permitAll()
+
+    .requestMatchers(
+        "/api/v1/hotels/**",
+        "/api/v1/rooms/**",
+        "/api/v1/reviews/**"
+    ).permitAll()
+
+    .anyRequest().authenticated()
+)
+
 
 
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint()))

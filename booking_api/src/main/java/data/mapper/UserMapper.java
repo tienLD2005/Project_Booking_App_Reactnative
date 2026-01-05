@@ -16,6 +16,7 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .dateOfBirth(String.valueOf(user.getDateOfBirth()))
                 .gender(user.getGender())
+                .avatar(user.getAvatar())
                 .build();
     }
 }

@@ -24,6 +24,7 @@ public class UpdateProfileRequest {
     private String phoneNumber;
     private LocalDate dateOfBirth;
     private String gender;
+    private String avatar;
     
     // OTP chỉ cần khi đổi số điện thoại
     private String otp;

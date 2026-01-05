@@ -17,6 +17,7 @@ public interface UserService {
     User getCurrentUser();
     User getUserById(Integer userId);
     UserResponseDTO updateProfile(UpdateProfileRequest request);
+    UserResponseDTO updateAvatar(org.springframework.web.multipart.MultipartFile file);
     void changePassword(ChangePasswordRequest request);
     void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(ResetPasswordRequest request);
